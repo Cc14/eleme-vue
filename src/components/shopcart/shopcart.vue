@@ -19,6 +19,13 @@
                 </div>
             </div>
         </div>
+        <transition name="drop">
+        <div class="ball-container">
+            <div v-for="(ball , index) in balls" :key="index" v-show="ball.show" class="ball">
+                <div class="inner inner-hook"></div>
+            </div>
+        </div>
+        </transition>
     </div>
 </template>
 
@@ -43,6 +50,28 @@
             minPrice:{
                 type:Number,
                 default:0
+            }
+        },
+        data() {
+            return {
+                balls: [
+                    {
+                        show:false
+                    },
+                    {
+                        show:false
+                    },
+                    {
+                        show:false
+                    },
+                    {
+                        show:false
+                    },
+                    {
+                        show:false
+                    }
+                ],
+                dropBalls:[]
             }
         },
         computed: {
@@ -77,7 +106,67 @@
                     return 'enough'
                 }
             }
-        }
+        },
+        methods:{
+            drop(el){
+                for(let i=0;i<this.balls.length;i++){
+                    let ball=this.balls[i]
+                    if(!ball.show){
+                        ball.show=true;
+                        ball.el=el;
+                        this.dropBalls.push(ball);
+                        return;
+                    }
+                }
+            },
+            // 小球执行步骤:
+            // 1. 点击cartcontrol组件中的”加号按钮“，$emit添加触发事件，将event.target作为参数，由goods父组件监听
+            // 2. goods组件接收事件和target，执行_drop(target)，调用shopcart子组件的drop(el)方法，传入了target
+            // 3. shopcart 组件执行 drop(el) 方法时，获取el在视口中的位置，编程式调用ball元素的过渡hook接口，执行css过渡
+
+            // 过渡 钩子
+            // 动画的原理是先把它偏移到一个位置，然后按照一定的轨迹和时间完成动画，动画完成后要把位置重置
+            beforeDrop(el) {    // el 是Vue 钩子选择作用动画的 DOM 对象
+                let count = this.balls.length;
+                while (count--) {
+                let ball = this.balls[count];
+                if (ball.show) {
+                    let rect = ball.el.getBoundingClientRect(); // 得到元素距视口各边的偏移量
+                    // 是相对于小球初始位置的，所以 x 是正的，y 是负的
+                    let x = rect.left - 32;
+                    let y = -(window.innerHeight - rect.top - 36);
+                    el.style.display = '';        // 手动设置为空，小球会显示出来
+                    el.style.webkitTransform = `translate3d(0,${y}px,0)`;
+                    el.style.transform = `translate3d(0,${y}px,0)`;
+                    let inner = el.getElementsByClassName('inner-hook')[0];   // 获取当前el的innerDom节点
+                    inner.style.webkitTransform = `translate3d(${x}px,0,0)`;
+                    inner.style.transform = `translate3d(${x}px,0,0)`;
+                }
+                }
+            },
+            dropping(el, done) {  // Vue enter 的第二个参数必须给，否则会设置成同步
+                /* eslint-disable no-unused-vars */
+                let rf = el.offsetHeight;
+                // 触发浏览器重绘，可以保证 dom 位置渲染正确后再执行之后的动画
+                this.$nextTick(() => {
+                el.style.webkitTransform = 'translate3d(0,-10px,0)';
+                el.style.transform = 'translate3d(0,-10px,0)';
+                let inner = el.getElementsByClassName('inner-hook')[0];
+                inner.style.webkitTransform = 'translate3d(0,0,0)';
+                inner.style.transform = 'translate3d(0,0,0)';
+                // 告知Vue，一个小球动画完成
+                el.addEventListener('transitionend', done);   // 当动画结束，会有  CSS3 transitionend 事件派发
+                });
+            },
+            afterDrop(el) {
+                // 首先触发afterDrop是最先落的小球，所以把第一项也就是先落的小球重置
+                let ball = this.dropBalls.shift();    // 删除dropBalls第一项，并返回此项
+                if (ball) {
+                ball.show = false;
+                el.style.display = 'none';
+                }
+            },
+        },
     }
 </script>
 
@@ -167,6 +256,20 @@
                 &.enough
                     background #00b43c
                     color #fff
+    .ball-container
+        .ball
+            position fixed
+            left 32px
+            bottom 22px
+            z-index 200
+            transition all .4s
+            .inner
+                width 16px
+                height 16px
+                border-radius 50%
+                background rgb(0,160,220)
+                transition all .4s
+
 
             
 

@@ -39,7 +39,7 @@
                 </li>
             </ul>
         </div>
-        <shopcart :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
+        <shopcart ref="shopcart" :select-foods="selectFoods" :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
     </div>
 </template>
 
@@ -75,6 +75,17 @@
                 }
                 return 0;
             },
+            selectFoods() {
+                let foods =[];
+                this.goods.forEach((good)=>{
+                    good.foods.forEach((food)=>{
+                        if(food.count){
+                            foods.push(food);
+                        }
+                    })
+                })
+                return foods;
+            }
             
             
         },
@@ -127,13 +138,14 @@
 
             },
             addFood(target) {//监听子元素的add事件，执行addFood函数
-                //this._drop(target)
+                this._drop(target)
 
             },
             _drop(tartget) {
-                //体验优化，异步执行下落动画
-                this.$nextTick(()=>{
+                //体验优化，异步执行下落动画 
+                this.$nextTick((target)=>{
                     this.$refs.shopcart.drop(target);
+                    
                 })
             },
             _followScroll(index) {
@@ -146,6 +158,11 @@
         components:{
             shopcart,
             cartcontrol
+        },
+        events:{
+            'cart.add'(target) {
+                this._drop(targets)
+            }
         }
     }
 </script>
