@@ -1090,7 +1090,7 @@
         {
           "name": "田园蔬菜粥",
           "price": 10,
-          "oldPrice": "",
+          "oldPrice": 12,
           "description": "咸粥",
           "sellCount": 33,
           "rating": 100,

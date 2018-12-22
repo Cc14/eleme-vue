@@ -1,4 +1,5 @@
 <template>
+<div>
     <div class="goods">
         <div class="menu-wrapper" ref="menuWrapper">
             <ul>
@@ -15,7 +16,7 @@
                 <li v-for="(item , index) in goods" :key="index" class="food-list" ref="foodList">
                     <h1 class="title">{{item.name}}</h1>
                     <ul>
-                        <li v-for="(food,index) in item.foods" :key="index" class="food-item border-1px">
+                        <li @click="selectFood(food,$event)" v-for="(food,index) in item.foods" :key="index" class="food-item border-1px">
                             <div class="icon">
                                 <img width="57" height="57" :src="food.icon" alt="">
                             </div>
@@ -28,7 +29,7 @@
                                 </div>
                                 <div class="price">
                                     <span class="now">￥{{food.price}}</span>
-                                    <span class="old" v-show="food.odlPrice">{￥{food.oldPrice}}</span>
+                                    <span class="old" v-show="food.oldPrice">￥{{food.oldPrice}}</span>
                                 </div>
                                 <div class="cartcontrol-wrapper">
                                     <cartcontrol :food="food" @add="addFood"></cartcontrol>
@@ -41,12 +42,15 @@
         </div>
         <shopcart ref="shopcart" :select-foods="selectFoods" :delivery-price="seller.deliveryPrice" :min-price="seller.minPrice"></shopcart>
     </div>
+    <food @add="addFood" :food="selectedFood" ref="food"></food>
+</div>
 </template>
 
 <script>
-    import BScroll from 'better-scroll'
+    import BScroll from 'better-scroll';
     import shopcart from '@/components/shopcart/shopcart';
-    import cartcontrol from '@/components/cartcontrol/cartcontrol'
+    import cartcontrol from '@/components/cartcontrol/cartcontrol';
+    import food from '@/components/food/food';
     const ERR_OK=0
     export default {
         props: {
@@ -59,7 +63,7 @@
                 goods:[],
                 listHeight: [],
                 scrollY: 0,
-                selectedFood: {}
+                selectedFood: {},
             }
         },
         computed:{
@@ -139,11 +143,19 @@
             },
             addFood(target) {//监听子元素的add事件，执行addFood函数
                 this._drop(target)
+                
 
             },
-            _drop(tartget) {
+            selectFood(food,event) {
+                if(!event._constructed){
+                    return ;
+                }
+                this.selectedFood = food;
+                this.$refs.food.show();
+            },
+            _drop(target) {
                 //体验优化，异步执行下落动画 
-                this.$nextTick((target)=>{
+                this.$nextTick(()=>{ 
                     this.$refs.shopcart.drop(target);
                     
                 })
@@ -157,11 +169,12 @@
         },
         components:{
             shopcart,
-            cartcontrol
+            cartcontrol,
+            food
         },
         events:{
             'cart.add'(target) {
-                this._drop(targets)
+                this._drop(target)
             }
         }
     }
